@@ -197,6 +197,8 @@ def test_rpc_response_error_requires_kind() -> None:
 
 
 def test_run_probe_vectors_unsandboxed_baseline(tmp_path: Path) -> None:
+    if sys.platform == "win32":
+        pytest.skip("Windows lacks standard Unix binaries (like cat) used by probe vectors.")
     arena_root = tmp_path / "arena"
     duel_scratch = arena_root / "scratch" / "duel"
     child_driver.setup_probe_fixture(arena_root, duel_scratch)
@@ -386,6 +388,8 @@ def test_classify_run_timeout_kind() -> None:
 
 
 def _require_sandbox_exec_or_fail_loudly() -> str:
+    if sys.platform == "win32":
+        pytest.skip("sandbox-exec is macOS only; skipping on Windows.")
     exe = sandbox.sandbox_exec_path()
     if exe is None:
         pytest.fail(

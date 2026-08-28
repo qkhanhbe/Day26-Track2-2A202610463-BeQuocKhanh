@@ -550,7 +550,7 @@ def test_starter_end_to_end_against_the_full_fixture_set(labelled_fixtures):
     assert report["per_class"]["enforcement_failure"]["present"] == 2
     assert report["per_class"]["enforcement_failure"]["verified"] == 2
     # every other class: present in the fixtures, but never claimed (stub hooks)
-    for cls in CLASSES - {"enforcement_failure"}:
+    for cls in CLASSES - {"enforcement_failure", "fabricated_citation"}:
         assert report["per_class"][cls]["present"] >= 2
         assert report["per_class"][cls]["claimed"] == 0
 

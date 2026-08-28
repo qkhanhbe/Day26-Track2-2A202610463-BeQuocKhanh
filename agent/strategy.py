@@ -134,7 +134,7 @@ def disciplined_round_cost() -> int:
     so if `kit/mcp/specs.py` is ever retuned, this number moves with it
     instead of silently lying."""
     return (
-        _spec_cost("slides", "query", fields=("title", "body"), n_rows=1)
+        _spec_cost("slides", "query", fields=("body", "score", "title"), n_rows=1)
         + _spec_cost("slides", "get_frame")
         + _spec_cost("registry", "provenance")
     )

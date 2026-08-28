@@ -497,7 +497,35 @@ def _hook_fabricated_citation(trace, answer, card) -> list[tuple[list[str], str]
     appears in ANY `tool_result.p.anchors` this exchange. Build the union of every
     `tool_result`'s `anchors` list, then diff it against `answer.cited_anchors` —
     anything in the answer but not in that union is fabricated."""
-    return []
+    if not isinstance(answer, Mapping):
+        return []
+        
+    cited_anchors = answer.get("cited_anchors")
+    if not cited_anchors:
+        return []
+    
+    seen_anchors = set()
+    for g in group_calls(trace):
+        if g.tool_result and isinstance(g.tool_result.get("p"), Mapping):
+            p = g.tool_result["p"]
+            seen_anchors.update(p.get("anchors", []))
+            for row in p.get("rows", []):
+                if isinstance(row, Mapping) and "anchor" in row:
+                    seen_anchors.add(row["anchor"])
+            
+    hits = []
+    ans_evt = final_answer_event(trace)
+    answer_seq = _seq(ans_evt) if ans_evt else None
+    if answer_seq is None:
+        return []
+        
+    for anchor in cited_anchors:
+        if anchor not in seen_anchors:
+            hits.append((
+                [anchor_ref(anchor), evt_ref(answer_seq)],
+                f"Anchor {anchor!r} was cited in the answer but never appeared in any tool_result's anchors list this exchange."
+            ))
+    return hits
 
 
 def _hook_hallucination(trace, answer, card) -> list[tuple[list[str], str]]:
@@ -644,7 +672,13 @@ def prosecute(trace: list[dict], answer: dict, card: dict) -> dict:
         ),
     ):
         for _evidence, _argument in hook(trace, answer, card):
-            pass  # each hook currently returns [] -- nothing to add yet
+            budget.try_add(
+                cls=cls,
+                evidence=_evidence[:MAX_EVIDENCE],
+                expected="compliant",
+                observed="violation",
+                argument=_argument,
+            )
 
     return {"v": 1, "claims": budget.claims()}
 
